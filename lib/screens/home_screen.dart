@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../config/app_routes.dart';
 import '../widgets/custom_card.dart';
+import '../models/movie.dart';
+import '../models/profile_data.dart';
+import '../screens/movie_detail_screen.dart'; // <-- ✔ IMPORT NECESARIO
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -24,9 +28,18 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Bienvenido, Cristopher.",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            Consumer<ProfileData>(
+              builder: (context, profile, child) {
+                // Extraer solo el primer nombre
+                final firstName = profile.name.split(' ').first;
+                return Text(
+                  "Bienvenido, $firstName.",
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 20),
             _buildQuickAccessCard(context),
@@ -83,13 +96,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildMovieGrid() {
-    // Datos de películas simplificados para el dashboard
-    final List<String> movieTitles = [
-      'Tenet',
-      'Inception',
-      'Dunkirk',
-      'Interstellar',
-    ];
+    // Usar las películas recomendadas del MovieRepository
+    final List<Movie> recommendedMovies = MovieRepository.getRecommended();
 
     return GridView.builder(
       shrinkWrap: true,
@@ -98,34 +106,58 @@ class HomeScreen extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 0.7, // Para que las portadas se vean verticales
+        childAspectRatio: 0.7,
       ),
-      itemCount: movieTitles.length,
+      itemCount: recommendedMovies.length,
       itemBuilder: (context, index) {
-        return CustomCard(
-          padding: 8,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    'https://picsum.photos/seed/${index + 100}/300/400',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
+        final movie = recommendedMovies[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MovieDetailScreen(movie: movie),
+              ),
+            );
+          },
+          child: CustomCard(
+            padding: 8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      movie.imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  movieTitles[index],
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        movie.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        movie.description,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

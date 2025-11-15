@@ -1,4 +1,3 @@
-// ... imports ...
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/profile_data.dart';
@@ -14,15 +13,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  bool _isInitialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    // Inicializar los controladores con los datos actuales del Provider
-    final profile = Provider.of<ProfileData>(context, listen: false);
-    _nameController.text = profile.name;
-    _phoneController.text = profile.phone;
-    _emailController.text = profile.email;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Inicializar los controladores solo una vez
+    if (!_isInitialized) {
+      final profile = Provider.of<ProfileData>(context, listen: false);
+      _nameController.text = profile.name;
+      _phoneController.text = profile.phone;
+      _emailController.text = profile.email;
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -43,21 +47,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
 
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Perfil actualizado con éxito!')),
-    );
+
+    // Mostrar el SnackBar después de volver
+    Future.delayed(Duration.zero, () {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Perfil actualizado con éxito!')),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Usamos Selector para reconstruir solo si cambia la URL de la imagen (opcional)
-    final imageUrl = Selector<ProfileData, String>(
-      selector: (_, profile) => profile.imageUrl,
-      builder: (context, url, child) {
-        return CircleAvatar(radius: 60, backgroundImage: NetworkImage(url));
-      },
-    );
-
     return Scaffold(
       appBar: AppBar(title: const Text('Editar Perfil')),
       body: SingleChildScrollView(
@@ -66,26 +66,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Center(
-              child: Stack(
-                children: [
-                  imageUrl, // Avatar
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
-                        shape: BoxShape.circle,
+              child: Consumer<ProfileData>(
+                builder: (context, profile, child) {
+                  return Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundImage: NetworkImage(profile.imageUrl),
                       ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 20,
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 30),
@@ -115,7 +122,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SizedBox(height: 30),
 
             ElevatedButton(
-              onPressed: _saveChanges, // Llama a la función de guardado
+              onPressed: _saveChanges,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 minimumSize: const Size(double.infinity, 50),

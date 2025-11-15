@@ -3,6 +3,7 @@ import '../config/app_routes.dart';
 import 'package:provider/provider.dart';
 import '../models/profile_data.dart';
 import '../models/movie.dart';
+import '../screens/movie_detail_screen.dart';
 
 // Definición de colores
 const Color _accentColor = Color(0xFF2196F3); // Azul vibrante de acento
@@ -20,11 +21,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // 0 = Watch History, 1 = Downloaded
   int _activeTabIndex = 0;
 
+  // Carga estática de las listas de películas (Marvel data)
   final List<Movie> _watchHistory = MovieRepository.getWatchHistory();
   final List<Movie> _downloaded = MovieRepository.getDownloaded();
 
   @override
   Widget build(BuildContext context) {
+    // Envuelto en Consumer para escuchar cambios en ProfileData
     return Consumer<ProfileData>(
       builder: (context, profile, child) {
         final Color subtitleColor =
@@ -51,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           body: Column(
             children: <Widget>[
+              // Datos extraídos del Provider (se reconstruye con .name, .phone, etc.)
               _buildHeaderSection(profile, subtitleColor),
               _buildSubscriptionCard(context, profile),
               _buildTabs(),
@@ -64,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ===========================================================
-  // LISTA DE PELÍCULAS (CORREGIDO)
+  // WIDGETS AUXILIARES
   // ===========================================================
   Widget _buildMovieList(Color subtitleColor) {
     List<Movie> currentList = _activeTabIndex == 0
@@ -75,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? 'Tu historial de visualización está vacío.'
         : 'No tienes películas descargadas.';
 
-    if (currentList.isEmpty) {
+    if (currentList.isEmpty && _activeTabIndex == 1) {
       return Expanded(
         child: Center(
           child: Text(message, style: TextStyle(color: subtitleColor)),
@@ -116,15 +120,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MovieDetailScreen(movie: movie),
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
 
-  // ===========================================================
-  // HEADER
-  // ===========================================================
   Widget _buildHeaderSection(ProfileData profile, Color subtitleColor) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -170,9 +179,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ===========================================================
-  // SUBSCRIPTION CARD
-  // ===========================================================
   Widget _buildSubscriptionCard(BuildContext context, ProfileData profile) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -209,9 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ===========================================================
-  // TABS
-  // ===========================================================
   Widget _buildTabs() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -234,9 +237,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// ===========================================================
-// TAB BUTTON
-// ===========================================================
 class _TabButton extends StatelessWidget {
   final String title;
   final bool isActive;
