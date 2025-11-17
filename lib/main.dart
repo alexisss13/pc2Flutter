@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Requeriría agregar 'provider: ^6.0.0' en pubspec.yaml
+import 'package:provider/provider.dart';
 
 import 'config/app_routes.dart';
 import 'models/profile_data.dart';
 
 void main() {
   runApp(
-    // Envolvemos la app en ChangeNotifierProvider
     ChangeNotifierProvider(
       create: (context) => ProfileData(),
       child: const MovieApp(),
